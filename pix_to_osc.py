@@ -1,3 +1,6 @@
+import os
+import inspect
+
 import wx
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
@@ -35,12 +38,13 @@ def play_osc(lvls):
 
 
 
+
 GLOBAL_DATA = None
 GLOBAL_READER = None
 GLOBAL_SERVER = None
 
 
-DEFAULT_DIRECTORY = ''
+DEFAULT_DIRECTORY = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 DEFAULT_FILENAME = 'binary.png'
 
 
@@ -232,8 +236,7 @@ class FileModal(wx.Dialog):
         panel = wx.Panel(self, size=(100, 100))
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-        # inp_file = wx.FileCtrl(panel, ID_FILE_CTRL, defaultDirectory=DEFAULT_DIRECTORY, defaultFilename=DEFAULT_FILENAME, wildCard="Images Files (*.bmp;*.dib;*.gif;*.jpg;*.png)|*.bmp;*.dib;*.gif;*.jpg;*.png")
-        inp_file = wx.FileCtrl(panel, ID_FILE_CTRL, wildCard="Images Files (*.bmp;*.dib;*.gif;*.jpg;*.png)|*.bmp;*.dib;*.gif;*.jpg;*.png")
+        inp_file = wx.FileCtrl(panel, ID_FILE_CTRL, defaultDirectory=DEFAULT_DIRECTORY, defaultFilename=DEFAULT_FILENAME, wildCard="Images Files (*.bmp;*.dib;*.gif;*.jpg;*.png)|*.bmp;*.dib;*.gif;*.jpg;*.png")
         sizer.Add(inp_file)
 
         sizer_btn = wx.StdDialogButtonSizer()
@@ -310,7 +313,7 @@ class ImageFrame(wx.Frame):
 
         if modal.ShowModal() == wx.ID_OK:
             input = self.FindWindowById(ID_FILE_CTRL)
-            self.load_file(input.GetFilename())
+            self.load_file(input.GetDirectory(), input.GetFilename())
 
         modal.Destroy()
 
@@ -320,10 +323,10 @@ class ImageFrame(wx.Frame):
 
 
     # create these functions for call them outside event context
-    def load_file(self, filename):
+    def load_file(self, directory, filename):
         global GLOBAL_DATA, GLOBAL_READER, GLOBAL_SERVER
-
-        GLOBAL_DATA = ImageData(DEFAULT_DIRECTORY + filename)
+        print(directory + filename)
+        GLOBAL_DATA = ImageData(f'{directory}\{filename}')
         GLOBAL_READER = DataReader()    # props init from GLOBAL_DATA.lvls
         GLOBAL_READER.control_panel = self.panel_reader_controls
 
@@ -343,10 +346,10 @@ class ImageFrame(wx.Frame):
 
     def enable_process(self, enable=True):
         if enable == True and self.process_is_enable == False:
-            self.SetCursor(wx.StockCursor(wx.CURSOR_DEFAULT))
+            self.SetCursor(wx.Cursor(wx.CURSOR_DEFAULT))
 
         elif enable == False and self.process_is_enable == True:
-            self.SetCursor(wx.StockCursor(wx.CURSOR_WAIT))
+            self.SetCursor(wx.Cursor(wx.CURSOR_WAIT))
 
         self.process_is_enable = enable
         # print(f'process enable set to {enable}')
