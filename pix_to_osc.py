@@ -75,15 +75,71 @@ INIT_READ_DIRECTION = 'lr'
 ###############################################################
 # Image Data
 class ImageData():
+    """
+    Open image, store pixels data in differents forms, and includes methods for manipulate them.
+    
+    Attributes
+    ----------
+    image : PIL.Image
+        The image opened and formated as described in the init_data_from_path method  
+    
+    pix_data : numpy.ndarray 2D
+        Pixels data of the loaded image, and formated as described in the init_data_from_path method
+
+    norms : numpy.ndarray 2D
+        Pixels data normalized in 0-1 interval
+
+    lvls : numpy.ndarray 2D
+        Pixels data normalized and modified in real time
+
+
+    Methods
+    -------
+    init_data_from_path(path)
+
+    ClassMethods
+    ------------
+    constrain_image(image, max_width, max_height)
+
+    get_data_from_file(path)
+
+    normalize(data)
+
+    reverse_colors(data)
+
+    trim_colors(data, min=0, max=255)
+    
+    reverse_lvls(lvls)
+    
+    trim_lvls(data, min=0.0, max=1.0)
+    
+    redim(data, coeff=3)
+    
+    """
 
     def __init__(self, path=None) -> None:
-    
+        """
+        Init data if instancied with a path.
+        
+        Parameters
+        ----------
+        path : complete path of an image file
+        """
         if path != None:
             self.init_data_from_path(path)
 
- 
     # # change only this function to init data according to use it
     def init_data_from_path(self, path):
+        """
+        Open and format an image file, init pix_data, norm and lvls attributes.
+
+        Change only this function to init data according to use it.
+
+        Parameters
+        ----------
+        path : str
+            The complete path of an image file
+        """
         self.image = Image.open(path)
         self.image = self.image.convert(mode='L')
 
@@ -97,10 +153,8 @@ class ImageData():
         self.pix_data = np.flipud(self.pix_data) # lines are fliped for according to the normal image viewer direction (down - up)
         print(f'pix_data shape: {self.pix_data.shape}')
 
-
         self.norm = ImageData.normalize(self.pix_data)
         self.lvls = self.norm
-
         # self.current_lvls = self.get_global_lvls(self.lvls, self.read_index, self.read_direction)
 
 
@@ -738,7 +792,7 @@ class PlayerControls(wx.Panel):
         super().__init__(parent, *args, **kw)
         self.parent = parent
         self.parent_frame = parent.Parent
-        self.SetBackgroundColour('gray')
+        # self.SetBackgroundColour('gray')
 
         sizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -915,7 +969,6 @@ class PlayerControls(wx.Panel):
 if __name__ == "__main__":
     app = wx.App()
     frame = ImageFrame(None, -1, "Image Frame", size=(600, 600))
-
-    # frame.load_file(DEFAULT_FILENAME)
+    frame.load_file(DEFAULT_DIRECTORY, DEFAULT_FILENAME)
 
     app.MainLoop()
