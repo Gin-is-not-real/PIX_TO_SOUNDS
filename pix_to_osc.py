@@ -96,25 +96,36 @@ class ImageData():
     Methods
     -------
     init_data_from_path(path)
+        Open and format image, and init pix_data, norm and lvls from it. Edit this methods for init data and format them as necessary
 
     ClassMethods
     ------------
     constrain_image(image, max_width, max_height)
+        Resize image
 
     get_data_from_file(path)
+         Open a PIL Image from path and return it as a numpy.array
 
+    convert_on_gray(data)
+        Copy and convert a 3D numpy array of RGB pixel data to a 2D numpy array L data
+    
     normalize(data)
+        Copy a 2D numpy array of L data and convert values for the interval 0-1
 
     reverse_colors(data)
+        Copy a 2D numpy array of L data (interval 0-255) and invert values 
 
     trim_colors(data, min=0, max=255)
-    
-    reverse_lvls(lvls)
+        Copy a 2D numpy array of L data (interval 0-255) and trim this values with min and max parameters
+        
+    reverse_lvs(lvls)
+        Copy a 2D numpy array of lvls data (pixels data in interval 0-1) and invert values 
     
     trim_lvls(data, min=0.0, max=1.0)
-    
+        Copy a 2D numpy array of lvls data (pixels data in interval 0-1) and trim this values with min and max parameters
+
     redim(data, coeff=3)
-    
+        Reduce a numpy array of data with a coefficient.
     """
 
     def __init__(self, path=None) -> None:
@@ -206,7 +217,6 @@ class ImageData():
 
         return temp_data
 
-
     @classmethod
     def reverse_colors(cls, data):
         temp_data = data[:, :].copy()
@@ -230,7 +240,6 @@ class ImageData():
 
         return temp_data  
     
-
     @classmethod
     def reverse_lvls(cls, lvls):
         temp_data = lvls[:, :].copy()
@@ -280,10 +289,16 @@ class ImageData():
 # File Modal
 class FileModal(wx.Dialog):
     """
-    Made appear a modal (wx Dialog) containing an input file.
+    Create a modal (wx Dialog) containing an input file.
     """
 
     def __init__(self, *args, **kw):
+        """
+        FileModal() FileModal(parent, id=ID_ANY, title=EmptyString, pos=DefaultPosition, size=DefaultSize, style=DEFAULT_DIALOG_STYLE, name=DialogNameStr)
+        
+        A wx DialogBox with a panel containing a wx.FileCtrl input allow to choose an image file. 
+        """
+
         super().__init__(*args, **kw)
         self.SetEscapeId(12345)
 
@@ -305,6 +320,41 @@ class FileModal(wx.Dialog):
 ###############################################################
 # Main Frame
 class ImageFrame(wx.Frame):
+    """
+    Main frame 
+
+    Attributes
+    ----------
+    process_is_enable: boolean
+    panel : wx.Panel
+    sizer : wx.BoxSizer
+    panel_img_controls : ImageControls
+    panel_img : ImagePanel
+    panel_reader_controls : ReaderControls
+    panel_player_controls : PlayerControls
+
+    Methods
+    -------
+    create_menu()
+        Create the wx.Menu element
+
+    on_file(event)
+        Event for the menu item File: show a FileModal
+
+    on_exit(event)
+        Event for the menu item Exit: Close frame
+
+    load_file(directory, filename)
+        Load an image file and init globals:  
+        GLOBAL_DATA is init with an ImageData object initied with concatened directory and filename strings.  
+        GLOBAL_READER is init with a DataReader object, and call its method init_frequency
+
+    update(text)
+        Call methods for update controls inputs of panels (panel_reader_controls, panel_player_controls) and re-displaying data on canvas or matplotlib figures.
+
+    enable_process(enable=True)
+        Change the cursor and enable/disable some controls 
+    """
     def __init__(self, *args, **kw):
         super().__init__(*args, **kw)
         self.process_is_enable = False
@@ -314,8 +364,8 @@ class ImageFrame(wx.Frame):
         self.CreateStatusBar()
 
         self.panel = wx.Panel(self)
-        self.sizer = wx.BoxSizer(wx.VERTICAL)
-        self.panel.SetSizer(self.sizer)
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        self.panel.SetSizer(sizer)
 
         # sizer for image edit controls and canvas image
         sizer_img = wx.BoxSizer()
@@ -325,20 +375,20 @@ class ImageFrame(wx.Frame):
         self.panel_img = ImagePanel(self.panel)
         sizer_img.Add(self.panel_img, -1, wx.LEFT)
 
-        self.sizer.Add(sizer_img, 0, wx.EXPAND)
+        sizer.Add(sizer_img, 0, wx.EXPAND)
 
 
         # sizer for read control
         sizer_reader = wx.BoxSizer()
         self.panel_reader_controls = ReaderControls(self.panel)
         sizer_reader.Add(self.panel_reader_controls, -1, wx.LEFT, border=10)
-        self.sizer.Add(sizer_reader, 0, wx.EXPAND)
+        sizer.Add(sizer_reader, 0, wx.EXPAND)
 
         # player controls
         sizer_player = wx.BoxSizer()
         self.panel_player_controls = PlayerControls(self.panel)
         sizer_player.Add(self.panel_player_controls, -1, wx.LEFT, border=10)
-        self.sizer.Add(sizer_player, 0, wx.EXPAND)
+        sizer.Add(sizer_player, 0, wx.EXPAND)
 
         self.Show()
         self.enable_process()
@@ -370,7 +420,6 @@ class ImageFrame(wx.Frame):
             self.load_file(input.GetDirectory(), input.GetFilename())
 
         modal.Destroy()
-
 
     def on_exit(self, event):
         self.Close(True)
@@ -411,6 +460,41 @@ class ImageFrame(wx.Frame):
 ###############################################################
 # Control Panel
 class ImageControls(wx.Panel):
+    """
+    A wx.Panel containing controls and events for edit the image data.
+
+    Attributes
+    ----------
+    parent : 
+    parent_frame : ImageFrame (wx.Frame)
+
+    
+    Methods
+    -------
+    update_global_lvls(lvls)
+        Update GLOBALS_DATA lvls attribute array, then init GLOBAL_READER lvls attribute array
+
+    update_global_norm(norm_lvls)
+        Update G_DATA norm attribute array, then update G_DATA lvls from BLACK and WHITE sliders values
+
+    on_reverse_colors(event)
+        Call ImageData reverse_lvls method, update G_DATA norm and call parent_frame update() method 
+
+    on_flip_horizontal(event)
+        Flip G_DATA norm array, update G_DATA norm and call parent_frame update() method
+
+    on_flip_vertical(event)
+        Flip G_DATA norm array, update G_DATA norm and call parent_frame update() method
+
+    get_sliders_values()
+        Get the values of BLACK and WHITE clim sliders
+
+    on_trim_lvls(event)
+        Trim G_DATA lvls from BLACK and WHITE clim sliders values and call parent_frame update() method
+
+    on_rotate(event)
+        Rotate G_DATA norm array to 90°, update G_DATA norm and call parent_frame update() method
+    """
 
     def __init__(self, parent, *args, **kw):
         super().__init__(parent, *args, **kw)
@@ -504,7 +588,6 @@ class ImageControls(wx.Panel):
 
         self.parent_frame.update('Colors are reversed')
         
-
     def on_flip_horizontal(self, event):
         self.parent_frame.enable_process(False)
 
@@ -512,7 +595,6 @@ class ImageControls(wx.Panel):
         self.update_global_norm(temp_data)
 
         self.parent_frame.update('Horizontal flip')
-
 
     def on_flip_vertical(self, event):
         self.parent_frame.enable_process(False)
@@ -554,7 +636,25 @@ class ImageControls(wx.Panel):
 ###############################################################
 # Image Panel
 class ImagePanel(wx.Panel):
+    """
+    A wx.Panel for display lvls data from image data. 
 
+    Attributes
+    ----------
+    parent : wx.
+    fig : matplotlib.Figure
+    canvas : matplotlib.FigureCanvas
+
+    Methods
+    -------
+    display(data)
+        Show image from data array and the reading line
+
+    plot_current(index, direction)
+        Show the line representing the current reading index and direction.
+
+     
+    """
     def __init__(self, parent, *args, **kw):
         super().__init__(parent, *args, **kw)
         self.parent = parent
@@ -595,6 +695,31 @@ class ImagePanel(wx.Panel):
 ###############################################################
 # Data Reader 
 class DataReader():
+    """
+    Global DataReader
+
+    Attributes
+    ----------
+    index : int
+    direction : str [lr, rl, ud, du]
+    lvls : 2D numpy.array
+    freq_base : int
+    freq_gap : int
+    freqs : array 
+
+    Methods
+    -------
+    set_index(value)
+    set_direction(direction_denom)
+    init_lvls_from_global()
+    init_frequencies()
+    set_freq_base(freq)
+    set_freq_gap(value)
+    get_display_index(index=None)
+    get_max_index()
+    get_nbr_lvls()
+
+    """
 
     def __init__(self):
         self.index = INIT_READ_INDEX
@@ -688,6 +813,24 @@ class DataReader():
 ###############################################################
 # Reader Controls 
 class ReaderControls(wx.Panel):
+    """
+    A wx.Panel with controls and events for DataReader object
+    
+    Attributes
+    ----------
+    parent : 
+    parent_frame : ImageFrame (wx.Frame)
+
+    Methods
+    -------
+    update()
+    set_reader_index(index)
+    on_direction(event)
+    on_index(event)
+    on_index_down(event)
+    on_index_up(event)
+
+    """
     def __init__(self, parent, *args, **kw):
         super().__init__(parent, *args, **kw)
         self.parent = parent
@@ -749,18 +892,16 @@ class ReaderControls(wx.Panel):
         if inp.Value > max:
             inp.SetValue(max)
 
+    def set_reader_index(self, index):
+        GLOBAL_READER.set_index(index)
+
+        self.parent_frame.update(f'Go to index {GLOBAL_READER.index}')
 
     def on_direction(self, event):
         denom = DIRECTION_DENOM[event.GetInt()]
         GLOBAL_READER.set_direction(denom)
 
         self.parent_frame.update(f'Set reading direction: {event.GetString()}')
-
-
-    def set_reader_index(self, index):
-        GLOBAL_READER.set_index(index)
-
-        self.parent_frame.update(f'Go to index {GLOBAL_READER.index}')
 
     def on_index(self, event):
         self.set_reader_index(event.GetInt())
@@ -776,7 +917,6 @@ class ReaderControls(wx.Panel):
             # play_osc(GLOBAL_READER.get_display_index())
             # play_osc(GLOBAL_READER.lvls[GLOBAL_READER.index])
 
-
     def on_index_up(self, event):
         index = GLOBAL_READER.index + 1
 
@@ -785,9 +925,37 @@ class ReaderControls(wx.Panel):
             # play_osc(GLOBAL_READER.get_display_index())
             # play_osc(GLOBAL_READER.lvls[GLOBAL_READER.index])
 
+
 # ###############################################################
 # Player Controls 
 class PlayerControls(wx.Panel):
+    """
+    A wx.Panel with input and event for the control pyo server and osc
+
+    Attributes
+    ----------
+    parent : 
+    parent_frame : ImageFrame (wx.Frame)
+    play_toggle : 
+    play_state : str [pause]
+    inp_freq_base : wx.Slider
+    inp_freq_gap : wx.Slider
+
+    Methods
+    -------
+    update_controls()
+    get_max_step_value(min, nbr)
+    on_fond_buttons(event)
+    on_step_buttons(event)
+    on_fond_slid(event)
+    on_step_slid(event)
+    on_stop(event)
+    on_play_toggle(event)
+    play()
+    pause()
+    stop()
+    read()
+    """
     def __init__(self, parent, *args, **kw):
         super().__init__(parent, *args, **kw)
         self.parent = parent
@@ -866,6 +1034,16 @@ class PlayerControls(wx.Panel):
             self.inp_freq_gap.SetValue(max_step)
             GLOBAL_READER.set_freq_base(max_step)
 
+    def get_max_step_value(self, min, nbr):
+        step = 1
+        max = min + (nbr * step)
+
+        while max < PL_MAX_FREQ:
+            step += 1
+            max = min + (nbr * step)
+
+        return step
+
 
     def on_fond_buttons(self, event):
         if event.GetEventObject().GetLabel() == '<':
@@ -883,17 +1061,6 @@ class PlayerControls(wx.Panel):
 
         GLOBAL_READER.set_freq_gap(self.inp_freq_gap.Value)
 
-
-    def get_max_step_value(self, min, nbr):
-        step = 1
-        max = min + (nbr * step)
-
-        while max < PL_MAX_FREQ:
-            step += 1
-            max = min + (nbr * step)
-
-        return step
-
     def on_fond_slid(self, event):
         print(event.GetInt())
         GLOBAL_READER.set_freq_base(event.GetInt())
@@ -901,7 +1068,6 @@ class PlayerControls(wx.Panel):
     def on_step_slid(self, event):
         print(event.GetInt())
         GLOBAL_READER.set_freq_gap(event.GetInt())
-
 
     def on_stop(self, event):
         self.stop()
@@ -936,7 +1102,6 @@ class PlayerControls(wx.Panel):
         GLOBAL_READER.set_index(0)
         self.parent_frame.update('Stop player')
         print('stop')
-
 
     def read(self):
         freqs = osc.freq
