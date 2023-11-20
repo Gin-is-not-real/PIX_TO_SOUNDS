@@ -7,7 +7,11 @@ A wx frame and classes for load an image, edit it, and read it as an inverted fr
 Classes:
 
 ImageData
-    Store different states of image data, and contain methods for manipulate them: define colors limits, rotate
+    Store different states of image data, and contain methods for manipulate them: 
+    - black and white lvls limits
+    - reverse colors
+    - flip horizontaly/verticaly
+    - rotate
 
 FileModal(wx.Dialog)
     Modal allow to choose a file
@@ -22,13 +26,19 @@ ImagePanel(wx.Panel)
     The panel for display current pixels data
 
 DataReader
-    Store current pixels data as they will be read by the player(direction, gap) and method ans settings for the convertion of pixels to oscillator attributes and for the reading of the image (index, direction)
+    Store current pixels data as they will be read by the player, method and settings for the convertion of pixels to oscillator attributes and for the reading of the image (index, direction)
 
 ReaderControls(wx.Panel)
-    The panel for control DataReader settings, with input and events
+    The panel for control DataReader settings, with input and events:
+    - reading direction
+    - reading index
 
 PlayerControls(wx.Panel)
-    The panel for control the audio server (play, stop..)
+    The panel for control the audio server, with input and events::
+    - play/pause
+    - stop
+    - fondamental frequency
+    - frequency gap
 """
 
 import os
