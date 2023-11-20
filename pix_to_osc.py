@@ -1,3 +1,36 @@
+"""
+Read an image as sounds.
+
+A wx frame and classes for load an image, edit it, and read it as an inverted frequency spectrum with a pyo oscillator.
+
+
+Classes:
+
+ImageData
+    Store different states of image data, and contain methods for manipulate them: define colors limits, rotate
+
+FileModal(wx.Dialog)
+    Modal allow to choose a file
+
+ImageFrame(wx.Frame)
+    The main frame 
+
+ImageControls(wx.Panel)
+    The panel for edit the image, with input and events
+
+ImagePanel(wx.Panel)
+    The panel for display current pixels data
+
+DataReader
+    Store current pixels data as they will be read by the player(direction, gap) and method ans settings for the convertion of pixels to oscillator attributes and for the reading of the image (index, direction)
+
+ReaderControls(wx.Panel)
+    The panel for control DataReader settings, with input and events
+
+PlayerControls(wx.Panel)
+    The panel for control the audio server (play, stop..)
+"""
+
 import os
 import inspect
 
@@ -12,6 +45,9 @@ import numpy as np
 from pyo import *
 import time
 
+# TODO: add globals for max image size, and update docstring (general)
+# TODO: add globals for read sleep time parameter, and update docstring (general)
+# TODO: add control for read sleep time parameter
 
 PL_MIN_FREQ = 20
 PL_MAX_FREQ = 20000
@@ -21,7 +57,6 @@ server = Server().boot()
 table = HarmTable([1])
 osc = Osc(table=table, freq=[440], mul=[1])
 osc.muls = []
-
 
 def play_osc(lvls):
     print(osc.freq)
@@ -35,8 +70,6 @@ def play_osc(lvls):
 
     time.sleep(2)
     server.stop()
-
-
 
 
 GLOBAL_DATA = None
@@ -70,7 +103,6 @@ DIRECTION_DENOM = ['lr', 'rl', 'ud', 'du']
 
 INIT_READ_INDEX = 0
 INIT_READ_DIRECTION = 'lr'
-
 
 ###############################################################
 # Image Data
@@ -924,7 +956,6 @@ class ReaderControls(wx.Panel):
             self.set_reader_index(index)
             # play_osc(GLOBAL_READER.get_display_index())
             # play_osc(GLOBAL_READER.lvls[GLOBAL_READER.index])
-
 
 # ###############################################################
 # Player Controls 
